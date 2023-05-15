@@ -7,9 +7,9 @@ const app = express();
 const http = require("http");
 const server = http.createServer(app);
 
-const db = require("./firebase/FirebaseService");
-
 const SOCKET_EVENTS = require("./utils/socketEvents");
+
+const { createRoom, joinRoom, leaveRoom } = require("./game/room");
 
 const socket = require("socket.io");
 const io = socket(server, {
@@ -19,9 +19,20 @@ const io = socket(server, {
   },
 });
 
-io.on("connection", (socket) => {
-  console.log("Socket Connected: ", socket.id);
+io.on(SOCKET_EVENTS.CONNECTION, (socket) => {
+  // Creating A New Room
+  socket.on(SOCKET_EVENTS.CREATE_ROOM, (data) => {
+    createRoom(socket, data);
+  });
+  // Joining A Room
+  socket.on(SOCKET_EVENTS.JOIN_ROOM, (data) => {
+    joinRoom(socket, data);
+  });
 
+  // Leaving A Room
+  socket.on(SOCKET_EVENTS.LEAVE_ROOM, (data) => {
+    leaveRoom(socket, data);
+  });
 });
 
 const PORT = process.env.PORT || 8000;
