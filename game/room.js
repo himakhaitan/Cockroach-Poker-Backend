@@ -1,4 +1,4 @@
-const { doc, setDoc } = require("firebase/firestore");
+const { doc, setDoc, getDoc } = require("firebase/firestore");
 const db = require("../firebase/FirebaseService");
 const SOCKET_EVENTS = require("../utils/socketEvents");
 
@@ -24,8 +24,30 @@ const createRoom = async (socket, data) => {
   console.log("Room Created");
 };
 
-const joinRoom = (socket, data) => {
-  // TODO: JOIN ROOM
+const joinRoom = async (socket, data) => {
+  console.log("joinRoom", data);
+
+  const docRef = doc(db, "rooms", data.roomId);
+  const docSnap = await getDoc(docRef);
+
+  let fetcheddata = docSnap.data();
+
+  fetcheddata.players.push({
+    name: data.userName,
+    avatar: data.userAvatar,
+    isHost: false,
+  });
+
+  await setDoc(docRef, fetcheddata);
+
+  socket.join(data.roomId);
+
+  socket.emit(SOCKET_EVENTS.PLAYER_JOINED, {
+    roomId: data.roomId,
+  });
+  socket.to(data.roomId).emit(SOCKET_EVENTS.REFRESH_LOBBY, fetcheddata.players);
+
+  console.log("Room Joined");
 };
 
 const leaveRoom = (socket, data) => {
