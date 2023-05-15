@@ -8,6 +8,7 @@ const SOCKET_EVENTS = {
   ROOM_JOINED: "roomJoined",
   PLAYER_JOINED: "playerJoined",
   REFRESH_LOBBY: "refreshLobby",
+  START_GAME: "startGame",
 };
 
 module.exports = SOCKET_EVENTS;

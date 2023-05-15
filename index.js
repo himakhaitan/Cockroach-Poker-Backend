@@ -29,6 +29,11 @@ io.on(SOCKET_EVENTS.CONNECTION, (socket) => {
     joinRoom(socket, data);
   });
 
+  // Start the Game
+  socket.on(SOCKET_EVENTS.START_GAME, (data) => {
+    socket.to(data).emit(SOCKET_EVENTS.START_GAME, data);
+  });
+
   // Leaving A Room
   socket.on(SOCKET_EVENTS.LEAVE_ROOM, (data) => {
     leaveRoom(socket, data);
