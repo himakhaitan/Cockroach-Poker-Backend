@@ -17,6 +17,7 @@ const createRoom = async (socket, data) => {
         id: socket.id,
       },
     ],
+    turn: Math.floor(Math.random() * 4),
   });
   socket.join(data.roomId);
 

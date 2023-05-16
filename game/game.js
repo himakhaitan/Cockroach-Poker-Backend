@@ -61,9 +61,6 @@ const startGame = async (socket, data) => {
     }
   }
 
-  // Set Turn
-
-  let turn = Math.floor(Math.random() * 4);
 
   // Set Game State
 
@@ -72,10 +69,6 @@ const startGame = async (socket, data) => {
   const docSnap = await getDoc(docRef);
 
   let fetcheddata = docSnap.data();
-
-  fetcheddata.gameState = {
-    turn: turn,
-  };
 
   fetcheddata.players[0].cards = players.p1;
   fetcheddata.players[0].lost = [];
@@ -99,14 +92,29 @@ const startGame = async (socket, data) => {
 const displayCards = async (socket, data) => {
   console.log("Display Cards");
   // EMIT TO ALL PLAYERS IN LOBBY
-  const docRef = doc(db, "rooms", data);
+  const docRef = doc(db, "rooms", data.roomId);
   const docSnap = await getDoc(docRef);
 
   let fetcheddata = docSnap.data();
+  console.log(fetcheddata);
+  fetcheddata.players.forEach((player) => {
+    let boardData = {
+      roomName: fetcheddata.roomName,
+      players: fetcheddata.players,
+    };
+
+    socket.to(player.id).emit(SOCKET_EVENTS.UPDATE_BOARD, boardData);
+    socket.to(player.id).emit(SOCKET_EVENTS.LOAD_CARDS, player.cards);
+  });
+
+  socket
+    .to(fetcheddata.players[fetcheddata.turn].id)
+    .emit(SOCKET_EVENTS.SET_TURN, true);
 
   fetcheddata.players.forEach((player) => {
-    console.log(player.id, player.cards);
-    socket.to(player.id).emit(SOCKET_EVENTS.LOAD_CARDS, player.cards);
+    if (player.id !== fetcheddata.players[fetcheddata.turn].id) {
+      socket.to(player.id).emit(SOCKET_EVENTS.SET_TURN, false);
+    }
   });
 };
 

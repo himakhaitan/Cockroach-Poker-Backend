@@ -38,7 +38,7 @@ io.on(SOCKET_EVENTS.CONNECTION, (socket) => {
   // Load Cards
   socket.on(SOCKET_EVENTS.LOAD_CARDS_REQUEST, (data) => {
     displayCards(socket, data);
-  })
+  });
 
   // Leaving A Room
   socket.on(SOCKET_EVENTS.LEAVE_ROOM, (data) => {
