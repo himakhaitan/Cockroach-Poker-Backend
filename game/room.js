@@ -14,6 +14,7 @@ const createRoom = async (socket, data) => {
         name: data.userName,
         avatar: data.userAvatar,
         isHost: true,
+        id: socket.id,
       },
     ],
   });
@@ -36,6 +37,7 @@ const joinRoom = async (socket, data) => {
     name: data.userName,
     avatar: data.userAvatar,
     isHost: false,
+    id: socket.id,
   });
 
   await setDoc(docRef, fetcheddata);

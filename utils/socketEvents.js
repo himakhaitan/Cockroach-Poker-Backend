@@ -9,6 +9,8 @@ const SOCKET_EVENTS = {
   PLAYER_JOINED: "playerJoined",
   REFRESH_LOBBY: "refreshLobby",
   START_GAME: "startGame",
+  LOAD_CARDS: "loadCards",
+  LOAD_CARDS_REQUEST: "loadCardsRequest",
 };
 
 module.exports = SOCKET_EVENTS;
