@@ -89,11 +89,13 @@ const startGame = async (socket, data) => {
 };
 
 const displayCards = async (socket, data) => {
+  console.log("Display Cards");
   // EMIT TO ALL PLAYERS IN LOBBY
   const docRef = doc(db, "rooms", data.roomId);
   const docSnap = await getDoc(docRef);
 
   let fetcheddata = docSnap.data();
+  console.log(fetcheddata);
   fetcheddata.players.forEach((player) => {
     let boardData = {
       roomName: fetcheddata.roomName,
@@ -103,10 +105,10 @@ const displayCards = async (socket, data) => {
     socket.to(player.id).emit(SOCKET_EVENTS.UPDATE_BOARD, boardData);
     socket.to(player.id).emit(SOCKET_EVENTS.LOAD_CARDS, player.cards);
   });
-  setTurn(socket, fetcheddata.turn, fetcheddata.players, data);
+  setTurn(socket, fetcheddata.turn, fetcheddata.players); 
 };
 
-const setTurn = (socket, turn, players, data) => {
+const setTurn = (socket, turn, players) => {
   // Emit true to player whose turn it is
   socket.to(players[turn].id).emit(SOCKET_EVENTS.SET_TURN, true);
 
@@ -118,128 +120,9 @@ const setTurn = (socket, turn, players, data) => {
       socket.to(player.id).emit(SOCKET_EVENTS.SET_TURN, false);
     }
   });
-
-  socket.to(data).emit(SOCKET_EVENTS.GAME_LOG, `${players[turn].name}'s turn`);
-};
-
-const initTurn = async (socket, data) => {
-  let { roomId, playedCard, playedPlayer, bluff } = data;
-  let playerId = socket.id;
-
-  const docRef = doc(db, "rooms", roomId);
-  const docSnap = await getDoc(docRef);
-
-  let fetcheddata = docSnap.data();
-
-  // Remove Card from Player
-  let playerIndex = fetcheddata.players.findIndex(
-    (player) => player.id === playerId
-  );
-
-  // Check for loose
-  if (fetcheddata.players[playerIndex].cards.length === 0) {
-    // EMIT GAME STATUS
-    socket
-      .to(roomId)
-      .emit(
-        SOCKET_EVENTS.RESULT,
-        `${fetcheddata.players[playerIndex].name} has lost the game`
-      );
-    return;
-  }
-
-  let cardIndex = fetcheddata.players[playerIndex].cards.findIndex(
-    (card) => card === playedCard
-  );
-  // Remove Card from Player
-  fetcheddata.players[playerIndex].cards.splice(cardIndex, 1);
-
-  // Set it to actual card
-  fetcheddata.actual = playedCard;
-
-  // set the bluff prompt
-  fetcheddata.bluff = bluff;
-
-  // Set played by
-  fetcheddata.playedBy = playerId;
-
-  // Fetch Played Player ID
-
-  let playedPlayerIndex = fetcheddata.players.findIndex(
-    (player) => player.name === playedPlayer
-  );
-
-  // Set Played to
-  fetcheddata.playedTo = fetcheddata.players[playedPlayerIndex].id;
-
-  // Set turn to played player
-  fetcheddata.turn = playedPlayerIndex;
-
-  // Save Data
-  await setDoc(docRef, fetcheddata);
-
-  // Send Game Log to all players
-  socket
-    .to(roomId)
-    .emit(
-      SOCKET_EVENTS.GAME_LOG,
-      `${fetcheddata.players[playerIndex].name} says it's a ${bluff} to ${fetcheddata.players[playedPlayerIndex].name}`
-    );
-
-  // Update Board of Player who played
-  socket
-    .to(playerId)
-    .emit(SOCKET_EVENTS.LOAD_CARDS, fetcheddata.players[playerIndex].cards);
-
-  // Update Board of Player who played to
-  socket.to(fetcheddata.playedTo).emit(
-    SOCKET_EVENTS.PLAYED,
-    fetcheddata.players.filter((player) => {
-      return player.id === fetcheddata.playedTo || player.id === playerId;
-    })
-  );
-};
-
-const replyTurn = async (socket, data) => {
-  const docRef = doc(db, "rooms", roomId);
-  const docSnap = await getDoc(docRef);
-
-  let fetcheddata = docSnap.data();
-
-  let playerId = socket.id;
-
-  let playedByIndex = fetcheddata.players.findIndex(
-    (player) => player.id === fetcheddata.playedBy
-  );
-
-  let playedToIndex = fetcheddata.players.findIndex(
-    (player) => player.id === fetcheddata.playedTo
-  );
-
-  if (data.reply) {
-    if (fetcheddata.actual == fetcheddata.bluff) {
-      fetcheddata.players[playedByIndex].lost.push(fetcheddata.actual);
-    }
-  } else {
-    if (fetcheddata.actual !== fetcheddata.bluff) {
-      fetcheddata.players[playedToIndex].lost.push(fetcheddata.actual);
-    }
-  }
-
-  if (!data.reply) {
-    if (fetcheddata.actual !== fetcheddata.bluff) {
-      fetcheddata.players[playedToIndex].lost.push(fetcheddata.actual);
-    } else {
-      fetcheddata.players[playedByIndex].lost.push(fetcheddata.actual);
-    }
-  }
-
-
 };
 
 module.exports = {
   startGame,
   displayCards,
-  initTurn,
-  replyTurn,
 };
