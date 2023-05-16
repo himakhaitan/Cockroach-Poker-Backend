@@ -110,6 +110,8 @@ const setTurn = (socket, turn, players, data) => {
   // Emit true to player whose turn it is
   socket.to(players[turn].id).emit(SOCKET_EVENTS.SET_TURN, true);
 
+
+  
   // Emit false to all other players
   players.forEach((player) => {
     if (player.id !== players[turn].id) {
