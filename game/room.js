@@ -3,7 +3,6 @@ const db = require("../firebase/FirebaseService");
 const SOCKET_EVENTS = require("../utils/socketEvents");
 
 const createRoom = async (socket, data) => {
-  console.log("createRoom", data);
 
   const docRef = doc(db, "rooms", data.roomId);
 
@@ -18,16 +17,17 @@ const createRoom = async (socket, data) => {
       },
     ],
     turn: Math.floor(Math.random() * 4),
+    bluff: null,
+    actual: null,
+    playedBy: null,
+    playedTo: null,
   });
   socket.join(data.roomId);
 
-  console.log("Document written with ID: ", docRef.id);
   socket.emit(SOCKET_EVENTS.ROOM_CREATED, { roomId: docRef.id });
-  console.log("Room Created");
 };
 
 const joinRoom = async (socket, data) => {
-  console.log("joinRoom", data);
 
   const docRef = doc(db, "rooms", data.roomId);
   const docSnap = await getDoc(docRef);
@@ -50,7 +50,6 @@ const joinRoom = async (socket, data) => {
   });
   socket.to(data.roomId).emit(SOCKET_EVENTS.REFRESH_LOBBY, fetcheddata.players);
 
-  console.log("Room Joined");
 };
 
 const leaveRoom = (socket, data) => {

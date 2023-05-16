@@ -12,7 +12,7 @@ const SOCKET_EVENTS = require("./utils/socketEvents");
 const { createRoom, joinRoom, leaveRoom } = require("./game/room");
 
 const socket = require("socket.io");
-const { displayCards, startGame } = require("./game/game");
+const { displayCards, startGame, initTurn, replyTurn } = require("./game/game");
 const io = socket(server, {
   cors: {
     origin: "*",
@@ -39,6 +39,15 @@ io.on(SOCKET_EVENTS.CONNECTION, (socket) => {
   socket.on(SOCKET_EVENTS.LOAD_CARDS_REQUEST, (data) => {
     displayCards(socket, data);
   });
+
+  // START TURN
+  socket.on(SOCKET_EVENTS.INIT_TURN, (data) => {
+    initTurn(socket, data);
+  });
+
+  socket.on(SOCKET_EVENTS.REPLY_TURN, (data) => {
+    replyTurn(socket, data);
+  })
 
   // Leaving A Room
   socket.on(SOCKET_EVENTS.LEAVE_ROOM, (data) => {

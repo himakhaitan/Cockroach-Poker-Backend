@@ -13,8 +13,16 @@ const SOCKET_EVENTS = {
   LOAD_CARDS_REQUEST: "loadCardsRequest",
   UPDATE_BOARD: "updateBoard",
 
+  PLAYED: "played",
+
   SET_TURN: "setTurn",
   SET_TO_TURN: "setToTurn",
+
+  INIT_TURN: "initTurn",
+  REPLY_TURN: "replyTurn",
+
+  RESULT: "result",
+  GAME_LOG: "gameLog",
 };
 
 module.exports = SOCKET_EVENTS;
