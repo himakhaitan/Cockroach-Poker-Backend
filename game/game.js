@@ -108,7 +108,82 @@ const displayCards = async (socket, data) => {
     .emit(SOCKET_EVENTS.SET_PLAYING, true);
 };
 
+const initTurn = async (socket, data) => {
+
+  // Fetch Room Data
+  const docRef = doc(db, "rooms", data.roomId);
+  const docSnap = await getDoc(docRef);
+  let fetcheddata = docSnap.data();
+
+  // Check if Card Exists
+
+  let playingPlayerIndex = fetcheddata.players.findIndex(
+    (player) => player.id === socket.id
+  );
+
+  let playedPlayerIndex = fetcheddata.players.findIndex(
+    (player) => player.name === data.playedPlayer
+  );
+
+  if (fetcheddata.players[playingPlayerIndex].cards == 0) {
+    // GAME LOST
+  }
+
+  // Remove Card from Players Hands
+  let playedCardIndex = fetcheddata.players[playingPlayerIndex].cards.findIndex(
+    (card) => card === data.playedCard
+  );
+
+  fetcheddata.players[playingPlayerIndex].cards.splice(playedCardIndex, 1);
+
+  // Set Played Card
+
+  fetcheddata.played_card = data.playedCard;
+
+  // Set Bluff Cards
+
+  fetcheddata.bluff_card = data.bluffingCard;
+
+  // Set Played Player
+
+  fetcheddata.played_player = {
+    name: data.playedPlayer,
+    id: fetcheddata.players[playedPlayerIndex].id,
+  };
+
+  // Set Playing Player
+
+  fetcheddata.playing_player = {
+    name: fetcheddata.players[playingPlayerIndex].name,
+    id: fetcheddata.players[playingPlayerIndex].id,
+  };
+
+  // Set Turn
+  fetcheddata.turn = playedPlayerIndex;
+
+  // Save Data
+  await setDoc(docRef, fetcheddata);
+
+  // Update Turns on Frontend
+
+  // - Playing Player
+  socket.to(data.roomId).emit(SOCKET_EVENTS.SET_PLAYING, false);
+  
+  // - Played Player
+  socket.to(fetcheddata.played_player.id).emit(SOCKET_EVENTS.SET_PLAYED, true);
+
+  // Emit LOG to all the Players
+  socket.to(data.roomId).emit(SOCKET_EVENTS.UPDATE_LOG, `${fetcheddata.playing_player.name} says it's a ${fetcheddata.bluff_card} to ${fetcheddata.played_player.name}`);
+
+  // Update Cards of Playing Player
+  socket.to(fetcheddata.playing_player.id).emit(SOCKET_EVENTS.LOAD_CARDS, fetcheddata.players[playingPlayerIndex].cards);
+};
+
+const replyTurn = async (socket, data) => {};
+
 module.exports = {
   startGame,
   displayCards,
+  initTurn,
+  replyTurn
 };

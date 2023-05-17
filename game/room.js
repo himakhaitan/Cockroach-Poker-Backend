@@ -17,6 +17,16 @@ const createRoom = async (socket, data) => {
       },
     ],
     turn: Math.floor(Math.random() * 4),
+    played_card: null,
+    bluff_card: null,
+    played_player: {
+      name: null,
+      id: null,
+    },
+    playing_player: {
+      name: null,
+      id: null,
+    },
   });
   socket.join(data.roomId);
 
