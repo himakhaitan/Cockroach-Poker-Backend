@@ -89,13 +89,11 @@ const startGame = async (socket, data) => {
 };
 
 const displayCards = async (socket, data) => {
-  console.log("Display Cards");
   // EMIT TO ALL PLAYERS IN LOBBY
   const docRef = doc(db, "rooms", data.roomId);
   const docSnap = await getDoc(docRef);
 
   let fetcheddata = docSnap.data();
-  console.log(fetcheddata);
   fetcheddata.players.forEach((player) => {
     let boardData = {
       roomName: fetcheddata.roomName,
