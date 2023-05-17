@@ -20,6 +20,8 @@ const SOCKET_EVENTS = {
   REPLY_TURN: "replyTurn",
   
   UPDATE_LOG: "updateLog",
+  UPDATE_CARDS: "updateCards",
+  SET_NULL: "setNull",
 };
 
 module.exports = SOCKET_EVENTS;

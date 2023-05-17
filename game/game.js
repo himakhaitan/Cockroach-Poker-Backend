@@ -109,7 +109,6 @@ const displayCards = async (socket, data) => {
 };
 
 const initTurn = async (socket, data) => {
-
   // Fetch Room Data
   const docRef = doc(db, "rooms", data.roomId);
   const docSnap = await getDoc(docRef);
@@ -166,24 +165,109 @@ const initTurn = async (socket, data) => {
 
   // Update Turns on Frontend
 
-  // - Playing Player
-  socket.to(data.roomId).emit(SOCKET_EVENTS.SET_PLAYING, false);
-  
   // - Played Player
   socket.to(fetcheddata.played_player.id).emit(SOCKET_EVENTS.SET_PLAYED, true);
 
   // Emit LOG to all the Players
-  socket.to(data.roomId).emit(SOCKET_EVENTS.UPDATE_LOG, `${fetcheddata.playing_player.name} says it's a ${fetcheddata.bluff_card} to ${fetcheddata.played_player.name}`);
-
-  // Update Cards of Playing Player
-  socket.to(fetcheddata.playing_player.id).emit(SOCKET_EVENTS.LOAD_CARDS, fetcheddata.players[playingPlayerIndex].cards);
+  socket
+    .to(data.roomId)
+    .emit(
+      SOCKET_EVENTS.UPDATE_LOG,
+      `${fetcheddata.playing_player.name} says it's a ${fetcheddata.bluff_card} to ${fetcheddata.played_player.name}`
+    );
 };
 
-const replyTurn = async (socket, data) => {};
+const replyTurn = async (socket, data) => {
+  const docRef = doc(db, "rooms", data.roomId);
+  const docSnap = await getDoc(docRef);
+  let fetcheddata = docSnap.data();
+
+  if (data.reply) {
+    if (fetcheddata.played_card == fetcheddata.bluff_card) {
+      // Bluffing Player Looses
+
+      socket
+        .to(data.roomId)
+        .emit(SOCKET_EVENTS.UPDATE_LOG, "Bluff Was Successful");
+
+      // Add card to lost of Bluffing Player
+      let bluffingPlayerIndex = fetcheddata.players.findIndex(
+        (player) => player.id === fetcheddata.playing_player.id
+      );
+
+      fetcheddata.players[bluffingPlayerIndex].lost.push(
+        fetcheddata.played_card
+      );
+      fetcheddata.played_card = null;
+      fetcheddata.bluff_card = null;
+    } else {
+      // Played Player Looses
+      socket.to(data.roomId).emit(SOCKET_EVENTS.UPDATE_LOG, "Bluff Was Called");
+      // Add card to lost of Played Player
+      let playedPlayerIndex = fetcheddata.players.findIndex(
+        (player) => player.id === fetcheddata.played_player.id
+      );
+
+      fetcheddata.players[playedPlayerIndex].lost.push(fetcheddata.played_card);
+
+      fetcheddata.bluff_card = null;
+      fetcheddata.played_card = null;
+    }
+  } else {
+    if (fetcheddata.played_card == fetcheddata.bluff_card) {
+      // Played Player Looses
+      socket.emit(SOCKET_EVENTS.UPDATE_LOG, "Bluff Was Called");
+
+      // Add card to lost of Played Player
+      let playedPlayerIndex = fetcheddata.players.findIndex(
+        (player) => player.id === fetcheddata.played_player.id
+      );
+
+      fetcheddata.players[playedPlayerIndex].lost.push(fetcheddata.played_card);
+
+      fetcheddata.bluff_card = null;
+      fetcheddata.played_card = null;
+    } else {
+      // Bluffing Player Looses
+      socket
+        .emit(SOCKET_EVENTS.UPDATE_LOG, "Bluff Was Successful");
+
+      // Add card to lost of Bluffing Player
+      let bluffingPlayerIndex = fetcheddata.players.findIndex(
+        (player) => player.id === fetcheddata.playing_player.id
+      );
+
+      fetcheddata.players[bluffingPlayerIndex].lost.push(
+        fetcheddata.played_card
+      );
+      fetcheddata.played_card = null;
+      fetcheddata.bluff_card = null;
+    }
+
+    socket.to(data.roomId).emit(SOCKET_EVENTS.SET_PLAYING, false);
+    socket.to(data.roomId).emit(SOCKET_EVENTS.SET_PLAYED, false);
+
+    fetcheddata.turn = (fetcheddata.turn + 1) % 4;
+
+   
+    // Save Data
+    await setDoc(docRef, fetcheddata, {
+      merge: true,
+      overwrite: true,
+    });
+
+    // Update Turns on Frontend
+
+    socket
+      .to(fetcheddata.players[fetcheddata.turn].id)
+      .emit(SOCKET_EVENTS.SET_PLAYING, true);
+  }
+  console.log(fetcheddata);
+};
 
 module.exports = {
   startGame,
   displayCards,
   initTurn,
-  replyTurn
+  replyTurn,
 };
