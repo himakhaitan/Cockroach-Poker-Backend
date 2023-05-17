@@ -105,21 +105,9 @@ const displayCards = async (socket, data) => {
     socket.to(player.id).emit(SOCKET_EVENTS.UPDATE_BOARD, boardData);
     socket.to(player.id).emit(SOCKET_EVENTS.LOAD_CARDS, player.cards);
   });
-  setTurn(socket, fetcheddata.turn, fetcheddata.players); 
-};
-
-const setTurn = (socket, turn, players) => {
-  // Emit true to player whose turn it is
-  socket.to(players[turn].id).emit(SOCKET_EVENTS.SET_TURN, true);
-
-
-  
-  // Emit false to all other players
-  players.forEach((player) => {
-    if (player.id !== players[turn].id) {
-      socket.to(player.id).emit(SOCKET_EVENTS.SET_TURN, false);
-    }
-  });
+  socket
+    .to(fetcheddata.players[fetcheddata.turn].id)
+    .emit(SOCKET_EVENTS.SET_PLAYING, true);
 };
 
 module.exports = {
